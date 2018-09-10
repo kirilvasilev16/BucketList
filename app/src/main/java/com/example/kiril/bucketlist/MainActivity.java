@@ -1,7 +1,9 @@
 package com.example.kiril.bucketlist;
 
 import android.database.Cursor;
+import android.os.Build;
 import android.speech.tts.TextToSpeech;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,6 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     DatabaseHelper myDb;
@@ -22,11 +26,25 @@ public class MainActivity extends AppCompatActivity {
     TextToSpeech toSpeech;
     boolean isInitialised;
 
+    public void initSpeech() {
+        isInitialised = false;
+        toSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                    isInitialised = true;
+                    toSpeech.setLanguage(Locale.US);
+                }
+            }
+        });
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
-
+        initSpeech();
         myDb = new DatabaseHelper(this);
 
         editTextId = (EditText)findViewById(R.id.tbID);
@@ -94,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
     public void viewAll() {
         btnviewAll.setOnClickListener(
                 new View.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
                     @Override
                     public void onClick(View v) {
                         Cursor res = myDb.getAllData();
@@ -104,12 +123,15 @@ public class MainActivity extends AppCompatActivity {
 
                         StringBuffer buffer = new StringBuffer();
                         buffer.append("ToDo:"+"\n");
+                        initSpeech();
                         while (res.moveToNext()) {
                             buffer.append("ID: "+ res.getString(0)+"\n");
                             buffer.append(" --> " + res.getString(1)+"\n");
+
                         }
 
                         showMessage("List",buffer.toString());
+                        toSpeech.speak("ok", TextToSpeech.QUEUE_FLUSH, null,null);
                     }
                 }
         );
